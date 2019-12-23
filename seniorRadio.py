@@ -10,14 +10,16 @@ import streams
 #define VLC instance
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
 
+#import URLs for streams from streams.py
 streamList = streams.streamList
-#Define VLC player
+listLength = len(streamList)
+
+#define VLC player
 player=instance.media_player_new()
 
-mediaList = []
 
-listLength = len(streamList)
 #Define VLC media
+mediaList = []
 for i in range(listLength):
     mediaList.append(instance.media_new(streamList[i]))
 
@@ -31,13 +33,5 @@ for i in range(listLength):
     time.sleep(5)
     player.stop()
 
-    #soundFile = vlc.MediaPlayer(streamList[i])
-    #soundFile.play()
-    #time.sleep(10)
-    #soundFile.stop()
-
-#Play the media
-player.play()
 player.audio_set_volume(100)
-time.sleep(5)
 
