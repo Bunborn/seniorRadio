@@ -4,39 +4,43 @@
 
 import vlc
 import time
-import streams #additional python file holding stream URLs
-import gpiozero
+import streams  # additional python file holding stream URLs
+import subprocess
 from gpiozero import LED, Button
 
-#setup
-#led = LED(11)
-#button = Button(13)
-#define VLC instance
+
+def buttonPress():
+    global buttonPressCounter
+    print("buttonPressCounter =", buttonPressCounter)
+    buttonPressCounter = buttonPressCounter + 1
+
+#restart pulseaudio, needs to playback audio on most boots
+subprocess.call(["pulseaudio", "-kill"])
+time.sleep(0.5)
+subprocess.call(["pulseaudio", "--start"])
+time.sleep(0.5)
+
+# setup
+led = LED(pin=27)  # BCM pin
+button = Button(pin=17, bounce_time=0.05)  # BCM pin
+buttonPressCounter = 0
+button.when_pressed = buttonPress
+# define VLC instance
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
 
-#import URLs for streams from streams.py
+# import URLs for streams from streams.py
 streamList = streams.streamList
 listLength = len(streamList)
 
+# define VLC player
+player = instance.media_player_new()
 
-led.on()
-time.sleep(1)
-led.off()
-time.sleep(1)
-button.when_pressed = led.on
-button.when_released = led.off
-
-#define VLC player
-player=instance.media_player_new()
-
-
-#Define VLC media
+# Define VLC media
 mediaList = []
 for i in range(listLength):
     mediaList.append(instance.media_new(streamList[i]))
 
-
-#Set and play player media
+# Set and play player media
 for i in range(listLength):
     player.set_media(mediaList[i])
     print(mediaList[i])
@@ -46,4 +50,3 @@ for i in range(listLength):
     player.stop()
 
 player.audio_set_volume(100)
-
