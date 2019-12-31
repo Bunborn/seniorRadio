@@ -4,26 +4,24 @@
 
 import vlc
 import time
-import streams  # additional python file holding stream URLs
 import subprocess
-import pyttsx3  #for text to speech, also need to install espeak
-from gpiozero import LED, Button
+from gpiozero import LED, Button #for rpi IO
 import json
 
 
 def buttonPress():
     print("button press yo")
 
+
 def changeStation():
     player.stop()
-    global stationSelected
     player.set_media(mediaList[stationSelected])
     saveState()
     player.play()
 
 
 def incrementStation(currentStation):
-    if currentStation == (listLength - 1):  # if last entry
+    if currentStation == (len(streamURLs) - 1):  # if last entry
         newStation = 0
     else:
         newStation = currentStation + 1  # increment
@@ -32,34 +30,72 @@ def incrementStation(currentStation):
 
 def decrementStation(currentStation):
     if currentStation == 0:  # if first entry
-        newStation = (listLength - 1)
+        newStation = (len(streamURLs) - 1)
     else:
         newStation = currentStation - 1  # decrement
     return newStation
 
+def increaseAudio(audioLevel):
+    if audioLevel == 100:  # if max
+        newAudio = 100
+    else:
+        newAudio = audioLevel + 10  # increase
+    return newAudio
 
-def pinARising():  # Pin A event handler
+
+def decreaseAudio(audioLevel):
+    if audioLevel == 0:  # if min
+        newAudio = 0
+    else:
+        newAudio = audioLevel - 10  # decrease
+    return newAudio
+
+
+def pinARising():  # Pin A station event handler
     if pinB.is_pressed:
-        print("CW")  # pin A rising while A is active is a clockwise turn
-        global countCW, countCCW
-        if countCCW > 0:  # reset, debouncer
-            countCW = 0
-            countCCW = 0
+        print("Station CW")  # pin A rising while A is active is a clockwise turn
+        global stationDialCountCW, stationDialCountCCW
+        if stationDialCountCCW > 0:  # reset, debouncer
+            stationDialCountCW = 0
+            stationDialCountCCW = 0
         else:
-            countCW = countCW + 1
-        print(countCW, countCCW)
+            stationDialCountCW = stationDialCountCW + 1
+        print(stationDialCountCW, stationDialCountCCW)
 
 
-def pinBRising():  # Pin B event handler
+def pinBRising():  # Pin B station event handler
     if pinA.is_pressed:
-        print("CCW")  # pin B rising while A is active is a clockwise turn
-        global countCW, countCCW
-        if countCW > 0:  # reset, debouncer
-            countCW = 0
-            countCCW = 0
+        print("Station CCW")  # pin B rising while A is active is a counter-clockwise turn
+        global stationDialCountCW, stationDialCountCCW
+        if stationDialCountCW > 0:  # reset, debouncer
+            stationDialCountCW = 0
+            stationDialCountCCW = 0
         else:
-            countCCW = countCCW + 1
-        print(countCW, countCCW)
+            stationDialCountCCW = stationDialCountCCW + 1
+        print(stationDialCountCW, stationDialCountCCW)
+
+
+def pinCRising():  # Pin C audio level event handler
+    if pinD.is_pressed:
+        print("Audio CW")  # pin C rising while C is active is a clockwise turn
+        global audioDialCountCW, audioDialCountCCW
+        if audioDialCountCCW > 0:  # reset, debouncer
+            audioDialCountCW = 0
+            audioDialCountCCW = 0
+        else:
+            audioDialCountCW = audioDialCountCW + 1
+        print(audioDialCountCW, audioDialCountCCW)
+
+def pinDRising():  # Pin D audio level event handler
+    if pinC.is_pressed:
+        print("Audio CCW")  # pin D rising while C is active is a counter-clockwise turn
+        global audioDialCountCW, audioDialCountCCW
+        if audioDialCountCW > 0:  # reset, debouncer
+            audioDialCountCW = 0
+            audioDialCountCCW = 0
+        else:
+            audioDialCountCW = audioDialCountCW + 1
+        print(audioDialCountCW, audioDialCountCCW)
 
 
 def saveState():
@@ -78,48 +114,64 @@ def saveState():
 # SETUP
 # setup pins
 led = LED(pin=27)  # BCM pin
+led.on()
 button = Button(pin=17, bounce_time=0.05, hold_time=0.25)  # BCM pin
 button.when_pressed = buttonPress
-pinA = Button(21, pull_up=True)  # Rotary encoder dt pin connected to BCM pin 21
-pinB = Button(20, pull_up=True)  # Rotary encoder clk pin connected to BCM pin 20
+pinA = Button(21, pull_up=True)  # Station rotary encoder dt pin connected to BCM pin 21
+pinB = Button(20, pull_up=True)  # Station rotary encoder clk pin connected to BCM pin 20
+pinC = Button(19, pull_up=True)  # Audio level rotary encoder dt pin connected to BCM pin
+pinD = Button(16, pull_up=True)  # Audio level rotary encoder clk pin connected to BCM pin
 
-countCW = 0
-countCCW = 0
+#  global variables
+stationDialCountCW = 0
+stationDialCountCCW = 0
+audioDialCountCW = 0
+audioDialCountCCW = 0
 
 # read json file and load data
 with open("radioState.json", "r") as f:
     radioState = json.load(f)
 stationSelected = radioState["stationSelected"]
-# import URLs for streams from streams.py
-streamList = streams.streamList
-listLength = len(streamList)
+audioLevel = radioState["audioLevel"]
+streamURLs = radioState["stationLinks"]
+streamNames = radioState["stationNames"]
 
-# define VLC instance
+# setup VLC
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
-# define VLC player
 player = instance.media_player_new()
-# define VLC media
-mediaList = []
-for i in range(listLength):
-    mediaList.append(instance.media_new(streamList[i]))
+mediaList = [] #list for each stream
+for i in range(len(streamURLs)):
+    mediaList.append(instance.media_new(streamURLs[i]))
 
-player.audio_set_volume(100)
-
+player.audio_set_volume(audioLevel)
 player.set_media(mediaList[stationSelected])
+
 player.play()
 
-pinA.when_pressed = pinARising  # Register the event handler for pin A
-pinB.when_pressed = pinBRising  # Register the event handler for pin B
+pinA.when_pressed = pinARising  # Register the station event handler for pin A
+pinB.when_pressed = pinBRising  # Register the station event handler for pin B
+pinC.when_pressed = pinCRising  # Register the audio level event handler for pin C
+pinD.when_pressed = pinDRising  # Register the audio level event handler for pin D
 
 while True:
-    # main loop, poll to see dial change with debouncing
-    if countCW > 5:  # valid turn
+    # main loop, poll to see dials change with debouncing
+    if stationDialCountCW >= 5:  # valid turn
         stationSelected = incrementStation(stationSelected)
         changeStation()
-        saveState()
-        countCW = 0
-    elif countCCW > 5: # valid turn
+        stationDialCountCW = 0
+    elif stationDialCountCCW >= 5:  # valid turn
         stationSelected = decrementStation(stationSelected)
         changeStation()
+        stationDialCountCCW = 0
+    if audioDialCountCW >= 3:  # likely valid turn
+        audioLevel = increaseAudio(audioLevel)
+        print("audio level:", audioLevel)
+        player.audio_set_volume(audioLevel)
         saveState()
-        countCCW = 0
+        audioDialCountCW = 0
+    elif audioDialCountCCW >= 3:  # likely valid turn
+        audioLevel = decreaseAudio(audioLevel)
+        print("audio level:", audioLevel)
+        player.audio_set_volume(audioLevel)
+        saveState()
+        audioDialCountCCW = 0
