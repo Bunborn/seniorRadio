@@ -10,7 +10,8 @@ import json
 
 
 def buttonPress():
-    print("button press yo")
+    print("button press")
+    player.pause()
 
 
 def changeStation():
@@ -94,7 +95,7 @@ def pinDRising():  # Pin D audio level event handler
             audioDialCountCW = 0
             audioDialCountCCW = 0
         else:
-            audioDialCountCW = audioDialCountCW + 1
+            audioDialCountCCW = audioDialCountCCW + 1
         print(audioDialCountCW, audioDialCountCCW)
 
 
@@ -147,7 +148,6 @@ for i in range(len(streamURLs)):
 
 player.audio_set_volume(audioLevel)
 player.set_media(mediaList[stationSelected])
-
 player.play()
 
 pinA.when_pressed = pinARising  # Register the station event handler for pin A
