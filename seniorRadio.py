@@ -131,10 +131,12 @@ audioDialCountCCW = 0
 # read json file and load data
 with open("radioState.json", "r") as f:
     radioState = json.load(f)
+with open("internetStations.json", "r") as f:
+    internetStations = json.load(f)
 stationSelected = radioState["stationSelected"]
 audioLevel = radioState["audioLevel"]
-streamURLs = radioState["stationLinks"]
-streamNames = radioState["stationNames"]
+streamURLs = internetStations["stationLinks"]
+streamNames = internetStations["stationNames"]
 
 # setup VLC
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
