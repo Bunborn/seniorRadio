@@ -7,6 +7,7 @@
 import vlc  # python-vlc package need to be installed
 from gpiozero import LED, Button  # for rpi IO
 import json
+import urllib.request  # grabbing github json page
 
 
 def buttonPress():
@@ -120,12 +121,13 @@ audioDialCountCCW = 0
 # read json file and load data
 with open("radioState.json", "r") as f:
     radioState = json.load(f)
-with open("internetStations.json", "r") as f:
-    internetStations = json.load(f)
+with urllib.request.urlopen("https://raw.githubusercontent.com/Bunborn/seniorRadio/master/internetStations.json") as url:  # change to your url for json file
+    internetStations = json.loads(url.read().decode())
 stationSelected = radioState["stationSelected"]
 audioLevel = radioState["audioLevel"]
 streamURLs = internetStations["stationLinks"]
-
+if stationSelected > len(streamURLs):  # not valid station anymore
+    stationSelected = 0
 # setup VLC
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
 player = instance.media_player_new()
