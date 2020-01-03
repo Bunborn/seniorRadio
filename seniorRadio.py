@@ -1,17 +1,25 @@
 #
 # Brandon Stevens
-# 12/31/2019
+# 01/03/2020
 # Main program for seniorRadio project. Reads IO and plays internet radio streams using VLC
 #
 
-import vlc  # python-vlc package need to be installed
+
 from gpiozero import LED, Button  # for rpi IO
 import json
 import urllib.request  # grabbing github json page
+import time  # for delays
+import subprocess  # for calling bash commands
 
+import sys
+sys.path.append("/home/pi/.local/lib/python3.7/site-packages/")  # PYTHONPATH fix to make sure it sees VLC package
+
+import vlc  # python-vlc package, and VLC need to be installed
+
+url = "https://raw.githubusercontent.com/Bunborn/seniorRadio/master/internetStations.json"  # Change to your JSON online file!
 
 def buttonPress():
-    player.pause()
+    player.pause()  # stops stream, resumes the stream on another press
 
 
 def changeStation():
@@ -102,11 +110,20 @@ def saveState():
 
 
 # SETUP
+
+
+# first, restart pulseaudio. Need to do this on almost every boot on my machine so just do it every time
+subprocess.call(["pulseaudio", "--kill"])
+time.sleep(0.5)
+subprocess.call(["pulseaudio", "--start"])
+time.sleep(0.5)
+
+
 # setup pins
 led = LED(pin=27)  # BCM pin
 led.on()
 button = Button(pin=17, bounce_time=0.04, hold_time=0.2)  # BCM pin 17, push button
-button.when_pressed = buttonPress  # calls bttonPress function
+button.when_pressed = buttonPress  # calls buttonPress function
 pinA = Button(21, pull_up=True)  # Station rotary encoder dt pin connected to BCM pin 21
 pinB = Button(20, pull_up=True)  # Station rotary encoder clk pin connected to BCM pin 20
 pinC = Button(19, pull_up=True)  # Audio level rotary encoder dt pin connected to BCM pin
@@ -121,17 +138,18 @@ audioDialCountCCW = 0
 # read json file and load data
 with open("radioState.json", "r") as f:
     radioState = json.load(f)
-with urllib.request.urlopen("https://raw.githubusercontent.com/Bunborn/seniorRadio/master/internetStations.json") as url:  # change to your url for json file
-    internetStations = json.loads(url.read().decode())
+with urllib.request.urlopen(url) as f:  # change to your url for json file at top of this file
+    internetStations = json.loads(f.read().decode())
 stationSelected = radioState["stationSelected"]
 audioLevel = radioState["audioLevel"]
 streamURLs = internetStations["stationLinks"]
 if stationSelected > len(streamURLs):  # not valid station anymore
     stationSelected = 0
+
 # setup VLC
 instance = vlc.Instance('--input-repeat=-1', '--fullscreen')
 player = instance.media_player_new()
-mediaList = [] #list for each stream
+mediaList = []  # list for each stream
 for i in range(len(streamURLs)):
     mediaList.append(instance.media_new(streamURLs[i]))
 
@@ -156,12 +174,12 @@ while True:
         stationSelected = decrementStation(stationSelected)
         changeStation()
         stationDialCountCCW = 0
-    if audioDialCountCW >= 3:  # likely valid turn
+    if audioDialCountCW >= 2:  # likely valid turn, okay if false positive rarely
         audioLevel = increaseAudio(audioLevel)
         player.audio_set_volume(audioLevel)
         saveState()
         audioDialCountCW = 0
-    elif audioDialCountCCW >= 3:  # likely valid turn
+    elif audioDialCountCCW >= 2:  # likely valid turn, okay if false positive rarely
         audioLevel = decreaseAudio(audioLevel)
         player.audio_set_volume(audioLevel)
         saveState()
