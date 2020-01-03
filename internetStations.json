@@ -1,3 +1,11 @@
 {
-    "stationLinks":[ "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws", "http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio1_mf_p" ]
+    "stationLinks":[ "http://bbcwssc.ic.llnwd.net/stream/bbcwssc_mp1_ws-einws",
+        "http://server.huthbroadcasting.com:8000/thepatriot",
+        "http://16843.live.streamtheworld.com/WBBMAM.mp3",
+        "http://ic2516.c591.fast-serv.com/stream",
+        "http://70.38.12.44:8144/stream",
+        "https://edge2-a.exa.live365.net/a68303?cache=Elpq6ykhuV",
+        "https://edge2-a.exa.live365.net/a64449?cache=n6INwt3Mva",
+        "http://107.182.231.73:7108/;"
+    ]
 }
