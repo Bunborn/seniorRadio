@@ -111,17 +111,20 @@ def saveState():
 
 # SETUP
 
+# quick fix to give time for connection with bluetooth speaker on startup
+# may not need depending on how you are booting it up
+time.sleep(30)
 
-# first, restart pulseaudio. Need to do this on almost every boot on my machine so just do it every time
+# first, restart pulseaudio. Need to do this on almost every boot on my and many machines so just do it every time
 subprocess.call(["pulseaudio", "--kill"])
 time.sleep(0.5)
 subprocess.call(["pulseaudio", "--start"])
 time.sleep(0.5)
 
 
-# setup pins
+# setup pins (https://pinout.xyz/ for reference)
 led = LED(pin=27)  # BCM pin
-led.on()
+led.on() # simply turn on when program runs
 button = Button(pin=17, bounce_time=0.04, hold_time=0.2)  # BCM pin 17, push button
 button.when_pressed = buttonPress  # calls buttonPress function
 pinA = Button(21, pull_up=True)  # Station rotary encoder dt pin connected to BCM pin 21
@@ -129,7 +132,7 @@ pinB = Button(20, pull_up=True)  # Station rotary encoder clk pin connected to B
 pinC = Button(19, pull_up=True)  # Audio level rotary encoder dt pin connected to BCM pin
 pinD = Button(16, pull_up=True)  # Audio level rotary encoder clk pin connected to BCM pin
 
-#  global variables
+#  global variables, track dial movement
 stationDialCountCW = 0
 stationDialCountCCW = 0
 audioDialCountCW = 0
@@ -138,7 +141,7 @@ audioDialCountCCW = 0
 # read json file and load data
 with open("radioState.json", "r") as f:
     radioState = json.load(f)
-with urllib.request.urlopen(url) as f:  # change to your url for json file at top of this file
+with urllib.request.urlopen(url) as f:  # change your url for json file at top of this file
     internetStations = json.loads(f.read().decode())
 stationSelected = radioState["stationSelected"]
 audioLevel = radioState["audioLevel"]
