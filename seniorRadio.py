@@ -129,8 +129,8 @@ button = Button(pin=17, bounce_time=0.04, hold_time=0.2)  # BCM pin 17, push but
 button.when_pressed = buttonPress  # calls buttonPress function
 pinA = Button(21, pull_up=True)  # Station rotary encoder dt pin connected to BCM pin 21
 pinB = Button(20, pull_up=True)  # Station rotary encoder clk pin connected to BCM pin 20
-pinC = Button(19, pull_up=True)  # Audio level rotary encoder dt pin connected to BCM pin
-pinD = Button(16, pull_up=True)  # Audio level rotary encoder clk pin connected to BCM pin
+pinC = Button(19, pull_up=True)  # Audio level rotary encoder dt pin connected to BCM pin 19
+pinD = Button(16, pull_up=True)  # Audio level rotary encoder clk pin connected to BCM pin 16
 
 #  global variables, track dial movement
 stationDialCountCW = 0
@@ -146,7 +146,7 @@ with urllib.request.urlopen(url) as f:  # change your url for json file at top o
 stationSelected = radioState["stationSelected"]
 audioLevel = radioState["audioLevel"]
 streamURLs = internetStations["stationLinks"]
-if stationSelected > len(streamURLs):  # not valid station anymore
+if stationSelected > len(streamURLs):  # not valid station anymore, outside range
     stationSelected = 0
 
 # setup VLC
